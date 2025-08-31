@@ -56,7 +56,6 @@ startServer();
 import express from "express";
 import cors from "cors";
 import "dotenv/config";
-import fileUpload from "express-fileupload"; // para upload de imagens
 import { connectAndSyncDB } from "./config/postgres.js";
 import connectCloudinary from "./config/cloudinary.js";
 
