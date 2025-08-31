@@ -86,7 +86,8 @@ const startServer = async () => {
     app.use(express.json()); // JSON
     app.use(fileUpload({     // upload de arquivos
       useTempFiles: true,
-      tempFileDir: '/tmp/'
+      tempFileDir: '/tmp/',
+      createParentPath: true,
     }));
 
     // CORS

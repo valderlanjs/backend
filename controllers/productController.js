@@ -110,108 +110,58 @@ export { addProduct, listProduct, removeProduct, singleProduct };*/
 import { v2 as cloudinary } from "cloudinary";
 import Product from "../models/productModel.js";
 
-
 const addProduct = async (req, res) => {
-    try {
-        const { name, category, subCategory, popular } = req.body;
-        const image1 = req.files.image1 && req.files.image1[0];
-        const image2 = req.files.image2 && req.files.image2[0];
-        const image3 = req.files.image3 && req.files.image3[0];
-        const image4 = req.files.image4 && req.files.image4[0];
+  try {
+    const { name, category, subCategory, popular } = req.body;
 
-        const images = [image1, image2, image3, image4].filter(
-            (item) => item !== undefined
-        );
+    // Pegando as imagens do req.files (express-fileupload)
+    const image1 = req.files?.image1;
+    const image2 = req.files?.image2;
+    const image3 = req.files?.image3;
+    const image4 = req.files?.image4;
 
-        if (images.length === 0) {
-            return res.status(400).json({ success: false, message: "Pelo menos uma imagem é necessária." });
-        }
+    const images = [image1, image2, image3, image4].filter(Boolean);
 
-        const imagesUrl = await Promise.all(
-            images.map(async (item) => {
-                let result = await cloudinary.uploader.upload(item.path, {
-                    resource_type: "image",
-                });
-                return result.secure_url;
-            })
-        );
+    if (images.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Pelo menos uma imagem é necessária.",
+      });
+    }
 
-        const productData = {
-            name,
-            category,
-            subCategory,
-            image: imagesUrl,
-            popular: popular === "true",
-        };
-        const product = await Product.create(productData);
-
-        res.status(201).json({
-            success: true,
-            message: "Produto adicionado com sucesso!",
-            product,
+    // Faz upload das imagens para o Cloudinary
+    const imagesUrl = await Promise.all(
+      images.map(async (file) => {
+        const result = await cloudinary.uploader.upload(file.tempFilePath, {
+          resource_type: "image",
         });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: "Erro ao adicionar produto." });
-    }
+        return result.secure_url;
+      })
+    );
+
+    // Criando o produto no banco
+    const productData = {
+      name,
+      category,
+      subCategory,
+      image: imagesUrl,
+      popular: popular === "true" || popular === true, // garante boolean
+    };
+
+    const product = await Product.create(productData);
+
+    res.status(201).json({
+      success: true,
+      message: "Produto adicionado com sucesso!",
+      product,
+    });
+  } catch (error) {
+    console.error("Erro ao adicionar produto:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erro ao adicionar produto.",
+    });
+  }
 };
 
-const listProduct = async (req, res) => {
-    try {
-        const products = await Product.findAll();
-        res.json({ success: true, products });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: "Erro ao listar produtos." });
-    }
-};
-
-const removeProduct = async (req, res) => {
-    try {
-        const { id } = req.body;
-        if (!id) {
-            return res.status(400).json({
-                success: false,
-                message: "ID do produto não fornecido.",
-            });
-        }
-
-        const result = await Product.destroy({
-            where: {
-                id: id
-            }
-        });
-
-        if (result === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Produto não encontrado.",
-            });
-        }
-
-        res.json({ success: true, message: "Produto removido com sucesso!" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: "Erro ao remover produto." });
-    }
-};
-
-const singleProduct = async (req, res) => {
-    try {
-        
-        const { productId } = req.params; 
-        
-        const product = await Product.findByPk(productId);
-
-        if (!product) {
-            return res.status(404).json({ success: false, message: "Produto não encontrado." });
-        }
-
-        res.json({ success: true, product });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: "Erro ao buscar produto." });
-    }
-};
-
-export { addProduct, listProduct, removeProduct, singleProduct };
+export default addProduct;
