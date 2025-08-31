@@ -84,11 +84,6 @@ const startServer = async () => {
 
     // ---------------------- MIDDLEWARES ---------------------- //
     app.use(express.json()); // JSON
-    app.use(fileUpload({     // upload de arquivos
-      useTempFiles: true,
-      tempFileDir: '/tmp/',
-      createParentPath: true,
-    }));
 
     // CORS
     app.use(cors({

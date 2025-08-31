@@ -110,32 +110,48 @@ export { addProduct, listProduct, removeProduct, singleProduct };*/
 import { v2 as cloudinary } from "cloudinary";
 import Product from "../models/productModel.js";
 
+const streamUpload = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream({
+      folder: "products",
+      resource_type: "image",
+    });
+    stream.end(fileBuffer);
+  });
+};
+
 const addProduct = async (req, res) => {
   try {
     const { name, category, subCategory, popular } = req.body;
 
-    // Pegando as imagens do req.files (express-fileupload)
-    const image1 = req.files?.image1;
-    const image2 = req.files?.image2;
-    const image3 = req.files?.image3;
-    const image4 = req.files?.image4;
+    // Multer popula req.files em arrays
+    const files = [];
+    if (req.files?.image1) files.push(req.files.image1[0]);
+    if (req.files?.image2) files.push(req.files.image2[0]);
+    if (req.files?.image3) files.push(req.files.image3[0]);
+    if (req.files?.image4) files.push(req.files.image4[0]);
 
-    const images = [image1, image2, image3, image4].filter(Boolean);
+    console.log(
+      "Arquivos recebidos:",
+      files.map((f) => ({
+        originalname: f.originalname,
+        mimetype: f.mimetype,
+        size: f.size,
+        hasBuffer: !!f.buffer,
+      }))
+    );
 
-    if (images.length === 0) {
+    if (files.length === 0) {
       return res.status(400).json({
         success: false,
         message: "Pelo menos uma imagem é necessária.",
       });
     }
 
-    // Faz upload das imagens para o Cloudinary
+    // Upload para Cloudinary
     const imagesUrl = await Promise.all(
-      images.map(async (file) => {
-        const result = await cloudinary.uploader.upload(file.tempFilePath, {
-          resource_type: "image",
-        });
-        return result.secure_url;
+      files.map(async (file) => {
+        return await streamUpload(file.buffer);
       })
     );
 
@@ -144,8 +160,8 @@ const addProduct = async (req, res) => {
       name,
       category,
       subCategory,
-      image: imagesUrl,
-      popular: popular === "true" || popular === true, // garante boolean
+      image: imagesUrl, // array de URLs
+      popular: popular === "true" || popular === true,
     };
 
     const product = await Product.create(productData);
@@ -156,7 +172,7 @@ const addProduct = async (req, res) => {
       product,
     });
   } catch (error) {
-    console.error("Erro ao adicionar produto:", error);
+    console.error("Erro ao adicionar produto:", error.message, error.stack);
     res.status(500).json({
       success: false,
       message: "Erro ao adicionar produto.",
