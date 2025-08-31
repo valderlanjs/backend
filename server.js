@@ -84,7 +84,7 @@ const startServer = async () => {
         app.use(express.json());
         app.use(cors({
             origin: [
-                "https://dev-valderlan.com.br/"
+                "https://dev-valderlan.com.br"
             ],
             methods: ["GET","POST", "PUT", "DELETE"],
             credentials: true
