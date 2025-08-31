@@ -164,4 +164,54 @@ const addProduct = async (req, res) => {
   }
 };
 
-export default addProduct;
+const listProduct = async (req, res) => {
+  try {
+    const products = await Product.findAll();
+    res.json({ success: true, products });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Erro ao listar produtos." });
+  }
+};
+const removeProduct = async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (!id) {
+      return res
+        .status(400)
+        .json({ success: false, message: "ID do produto não fornecido." });
+    }
+    const result = await Product.destroy({ where: { id: id } });
+    if (result === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Produto não encontrado." });
+    }
+    res.json({ success: true, message: "Produto removido com sucesso!" });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Erro ao remover produto." });
+  }
+};
+const singleProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const product = await Product.findByPk(productId);
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Produto não encontrado." });
+    }
+    res.json({ success: true, product });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Erro ao buscar produto." });
+  }
+};
+export { addProduct, listProduct, removeProduct, singleProduct };
