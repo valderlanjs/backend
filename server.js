@@ -53,57 +53,61 @@ const startServer = async () => {
 // Iniciando o servidor
 startServer();
 */
-
 import express from "express";
 import cors from "cors";
 import "dotenv/config";
+import fileUpload from "express-fileupload"; // para upload de imagens
 import { connectAndSyncDB } from "./config/postgres.js";
 import connectCloudinary from "./config/cloudinary.js";
+
 import userRoute from "./routes/userRoute.js";
 import productRouter from "./routes/productRoute.js";
 import vendorRoute from "./routes/vendorRoute.js";
 import bannerRoute from "./routes/bannerRoute.js";
 import heroRoute from "./routes/heroRoute.js";
 
+// Origens permitidas
 const allowedOrigins = [
-  "http://localhost:5174", // dev local
-  "https://dev-valderlan.com.br", // produção
+  "http://localhost:5173",       // frontend local (site)
+  "http://localhost:5174",       // frontend local (admin)
+  "https://dev-valderlan.com.br" // produção
 ];
 
 // Função para conectar ao banco de dados e iniciar o servidor
 const startServer = async () => {
   try {
-    // Chamando a nova função para conectar ao MySQL e sincronizar os models
-    await connectAndSyncDB();
+    await connectAndSyncDB(); // conecta banco
+    connectCloudinary();      // conecta Cloudinary
 
-    // Conectando ao Cloudinary
-    connectCloudinary();
-
-    // Criando a aplicação
     const app = express();
     const port = process.env.PORT || 4000;
 
-    // Middlewares
-    app.use(express.json());
-    app.use(express.json());
-    app.use(
-      cors({
-        origin: function (origin, callback) {
-          if (!origin) return callback(null, true); // permite Postman, curl etc
-          if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-          } else {
-            return callback(new Error("Not allowed by CORS"));
-          }
-        },
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"],
-        credentials: true,
-      })
-    );
+    // ---------------------- MIDDLEWARES ---------------------- //
+    app.use(express.json()); // JSON
+    app.use(fileUpload({     // upload de arquivos
+      useTempFiles: true,
+      tempFileDir: '/tmp/'
+    }));
 
+    // CORS
+    app.use(cors({
+      origin: function(origin, callback) {
+        if (!origin) return callback(null, true); // Postman, curl etc
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "token"], // inclui token
+      credentials: true
+    }));
+
+    // Garante resposta para preflight
     app.options("*", cors());
-    // Endpoints da API
+
+    // ---------------------- ROTAS ---------------------- //
     app.use("/api/user", userRoute);
     app.use("/api/product", productRouter);
     app.use("/api/vendor", vendorRoute);
@@ -114,10 +118,11 @@ const startServer = async () => {
       res.send("API funcionando com MySQL e Sequelize!");
     });
 
-    // Iniciando o servidor
+    // ---------------------- START SERVER ---------------------- //
     app.listen(port, "0.0.0.0", () => {
       console.log(`🚀 Servidor rodando na porta ${port}`);
     });
+
   } catch (error) {
     console.error("❌ Erro fatal ao iniciar o servidor:", error);
   }
