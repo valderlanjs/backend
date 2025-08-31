@@ -82,7 +82,13 @@ const startServer = async () => {
 
         // Middlewares
         app.use(express.json());
-        app.use(cors());
+        app.use(cors({
+            origin: [
+                "https://dev-valderlan.com.br/"
+            ],
+            methods: ["GET","POST", "PUT", "DELETE"],
+            credentials: true
+        }));
 
         // Endpoints da API
         app.use('/api/user', userRoute);
