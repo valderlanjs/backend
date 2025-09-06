@@ -103,7 +103,7 @@ export { getHeroImage, updateHeroImage };
 
 
 
-import HeroBanner from "../models/heroBannerModel.js";
+import HeroBanner from "../models/heroModel.js";
 import { v2 as cloudinary } from "cloudinary";
 
 const streamUpload = (fileBuffer) => {
