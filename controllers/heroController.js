@@ -102,7 +102,6 @@ export { getHeroImage, updateHeroImage };
 
 
 
-
 import HeroBanner from "../models/heroModel.js";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -121,8 +120,8 @@ const streamUpload = (fileBuffer) => {
 
 const getHeroImages = async (req, res) => {
   try {
-    const banners = await HeroBanner.findAll();
-    res.json({ success: true, images: banners.map((b) => b.imageUrl) });
+    const banners = await HeroBanner.findAll({ order: [["id", "DESC"]] });
+    res.json({ success: true, images: banners });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Erro ao obter banners." });
@@ -136,7 +135,7 @@ const addHero = async (req, res) => {
 
     const imageUrl = await streamUpload(image.buffer);
 
-    const newHero = await Hero.create({ imageUrl });
+    const newHero = await HeroBanner.create({ imageUrl });
 
     res.json({ success: true, message: "Banner adicionado com sucesso!", hero: newHero });
   } catch (error) {
@@ -145,25 +144,10 @@ const addHero = async (req, res) => {
   }
 };
 
-const addHeroImage = async (req, res) => {
-  try {
-    const image = req.files?.image && req.files.image[0];
-    if (!image) return res.status(400).json({ success: false, message: "Nenhuma imagem enviada." });
-
-    const imageUrl = await streamUpload(image.buffer);
-    await HeroBanner.create({ imageUrl });
-
-    res.json({ success: true, message: "Imagem adicionada com sucesso!" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Erro ao adicionar imagem." });
-  }
-};
-
 const deleteHero = async (req, res) => {
   try {
     const { id } = req.params;
-    const hero = await Hero.findByPk(id);
+    const hero = await HeroBanner.findByPk(id);
 
     if (!hero) {
       return res.json({ success: false, message: "Banner não encontrado" });
@@ -175,6 +159,7 @@ const deleteHero = async (req, res) => {
     console.error(error);
     res.json({ success: false, message: "Erro ao remover o banner" });
   }
-}; 
+};
 
-export { getHeroImages, addHeroImage, deleteHero, addHero };
+export { getHeroImages, addHero, deleteHero };
+
