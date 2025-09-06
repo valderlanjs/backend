@@ -129,6 +129,22 @@ const getHeroImages = async (req, res) => {
   }
 };
 
+const addHero = async (req, res) => {
+  try {
+    const image = req.files?.image && req.files.image[0];
+    if (!image) return res.status(400).json({ success: false, message: "Nenhuma imagem enviada." });
+
+    const imageUrl = await streamUpload(image.buffer);
+
+    const newHero = await Hero.create({ imageUrl });
+
+    res.json({ success: true, message: "Banner adicionado com sucesso!", hero: newHero });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Erro ao adicionar o banner." });
+  }
+};
+
 const addHeroImage = async (req, res) => {
   try {
     const image = req.files?.image && req.files.image[0];
@@ -161,4 +177,4 @@ const deleteHero = async (req, res) => {
   }
 }; 
 
-export { getHeroImages, addHeroImage, deleteHero };
+export { getHeroImages, addHeroImage, deleteHero, addHero };
