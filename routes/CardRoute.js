@@ -4,7 +4,7 @@ import { createCard, getCards } from "../controllers/CardController.js";
 
 const cardRoute = express.Router();
 
-router.post("/", createCard);
-router.get("/", getCards);
+cardRoute.post("/", createCard);
+cardRoute.get("/", getCards);
 
 export default cardRoute;
