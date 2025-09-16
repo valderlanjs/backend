@@ -64,6 +64,7 @@ import productRouter from "./routes/productRoute.js";
 import vendorRoute from "./routes/vendorRoute.js";
 import bannerRoute from "./routes/bannerRoute.js";
 import heroRoute from "./routes/heroRoute.js";
+import cardRoute from "./routes/CardRoute.js"
 
 // Origens permitidas
 const allowedOrigins = [
@@ -108,6 +109,7 @@ const startServer = async () => {
     app.use("/api/vendor", vendorRoute);
     app.use("/api/banner", bannerRoute);
     app.use("/api/hero", heroRoute);
+    app.use("/api/cards", cardRoute);
 
     app.get("/", (req, res) => {
       res.send("API funcionando com MySQL e Sequelize!");
