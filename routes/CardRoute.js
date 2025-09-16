@@ -1,11 +1,17 @@
 import express from "express";
-import { createCard, getCards } from "../controllers/CardController.js";
-import upload from "../middleware/multer.js";
+import { createCardGroup, getCards } from "../controllers/cardController.js";
+import upload from "../config/multer.js";
 
 const cardRoute = express.Router();
 
-// Aplica o middleware de upload à rota de criação
-cardRoute.post("/", upload.single("image"), createCard);
+// Rota para criar 3 cards de uma vez
+cardRoute.post("/group", upload.fields([
+  { name: "image1", maxCount: 1 },
+  { name: "image2", maxCount: 1 },
+  { name: "image3", maxCount: 1 },
+]), createCardGroup);
+
+// Rota para listar todos os cards
 cardRoute.get("/", getCards);
 
 export default cardRoute;

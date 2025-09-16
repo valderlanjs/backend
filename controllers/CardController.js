@@ -1,51 +1,60 @@
-// Criar card
 import Card from "../models/CardModel.js";
 import { v2 as cloudinary } from "cloudinary";
 
-// Criar card com upload de imagem
-export const createCard = async (req, res) => {
-  try {
-    const { title, subtitle, link } = req.body;
-
-    if (!req.file) {
-      return res.status(400).json({ error: "Imagem é obrigatória." });
-    }
-
-    // Upload da imagem para o Cloudinary
-    const result = await cloudinary.uploader.upload_stream(
-      { resource_type: "image", folder: "cards" },
-      async (error, result) => {
-        if (error) {
-          return res.status(500).json({ error: "Erro ao enviar imagem." });
-        }
-
-        // Cria o card com a URL da imagem
-        const card = await Card.create({
-          title,
-          subtitle,
-          link,
-          image: result.secure_url,
-        });
-
-        res.status(201).json({ success: true, card });
+// Função auxiliar para upload de imagem
+const streamUpload = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: "cards", resource_type: "image" },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result.secure_url);
       }
     );
+    stream.end(fileBuffer);
+  });
+};
 
-    // Envia o buffer da imagem
-    result.end(req.file.buffer);
+// Criar 3 cards de uma vez
+export const createCardGroup = async (req, res) => {
+  try {
+    const { title1, subtitle1, link1, title2, subtitle2, link2, title3, subtitle3, link3 } = req.body;
+    const files = req.files;
 
+    // Validação básica
+    if (!title1 || !subtitle1 || !files.image1 ||
+        !title2 || !subtitle2 || !files.image2 ||
+        !title3 || !subtitle3 || !files.image3) {
+      return res.status(400).json({ success: false, message: "Todos os 3 cards devem estar completos." });
+    }
+
+    // Upload das imagens
+    const imageUrls = await Promise.all([
+      streamUpload(files.image1[0].buffer),
+      streamUpload(files.image2[0].buffer),
+      streamUpload(files.image3[0].buffer),
+    ]);
+
+    // Criação dos cards
+    const cards = await Promise.all([
+      Card.create({ title: title1, subtitle: subtitle1, link: link1, image: imageUrls[0] }),
+      Card.create({ title: title2, subtitle: subtitle2, link: link2, image: imageUrls[1] }),
+      Card.create({ title: title3, subtitle: subtitle3, link: link3, image: imageUrls[2] }),
+    ]);
+
+    res.status(201).json({ success: true, message: "Cards criados com sucesso!", cards });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Erro ao criar cards:", error.message);
+    res.status(500).json({ success: false, message: "Erro interno ao criar cards." });
   }
 };
 
-
-// Listar cards
+// Listar todos os cards
 export const getCards = async (req, res) => {
   try {
     const cards = await Card.findAll();
-    res.json(cards);
+    res.json({ success: true, cards });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
