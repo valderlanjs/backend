@@ -1,5 +1,5 @@
 // controllers/cardController.js
-import Card from "../models/Card.js";
+import Card from "../models/CardModel.js";
 
 // Criar card
 export const createCard = async (req, res) => {
