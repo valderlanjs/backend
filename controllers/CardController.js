@@ -52,12 +52,46 @@ export const createCardGroup = async (req, res) => {
 // Listar todos os cards
 export const getCards = async (req, res) => {
   try {
-    const cards = await Card.findAll();
-    res.json({ success: true, cards });
+    const section = await CardSection.findOne({ order: [["createdAt", "DESC"]] });
+    const cards = await Card.findAll({
+      where: { sectionId: section?.id || null },
+      order: [["createdAt", "ASC"]],
+    });
+
+    res.json({
+      success: true,
+      sectionTitle: section?.title || "",
+      cards,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const updateSectionTitle = async (req, res) => {
+  try {
+    const { title } = req.body;
+    if (!title || title.trim() === "") {
+      return res.status(400).json({ success: false, message: "Título inválido." });
+    }
+
+    const section = await CardSection.findOne({ order: [["createdAt", "DESC"]] });
+
+    if (section) {
+      section.title = title;
+      await section.save();
+      return res.json({ success: true, message: "Título atualizado com sucesso!" });
+    } else {
+      const newSection = await CardSection.create({ title });
+      return res.json({ success: true, message: "Título criado com sucesso!", section: newSection });
+    }
+  } catch (error) {
+    console.error("Erro ao atualizar título:", error.message);
+    res.status(500).json({ success: false, message: "Erro ao atualizar título." });
+  }
+};
+
+
 
 // Excluir card individual
 export const deleteCard = async (req, res) => {
