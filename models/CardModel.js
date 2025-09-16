@@ -1,6 +1,6 @@
 // models/Card.js
 import { DataTypes } from "sequelize";
-import sequelize from "../config/postgres.js";
+import {sequelize} from "../config/postgres.js";
 
 const Card = sequelize.define("Card", {
   title: {
