@@ -1,6 +1,3 @@
-// controllers/cardController.js
-import Card from "../models/CardModel.js";
-
 // Criar card
 import Card from "../models/CardModel.js";
 import { v2 as cloudinary } from "cloudinary";

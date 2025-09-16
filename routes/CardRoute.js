@@ -1,6 +1,6 @@
 import express from "express";
 import { createCard, getCards } from "../controllers/CardController.js";
-import upload from "../config/multer.js";
+import upload from "../middleware/multer.js";
 
 const cardRoute = express.Router();
 
