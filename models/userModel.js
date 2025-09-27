@@ -1,14 +1,13 @@
-// userModel.js - Atualize para incluir timestamps
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/postgres.js";
 
 const User = sequelize.define('User', {
     name: { type: DataTypes.STRING, allowNull: false },
-    email: { type: DataTypes.STRING, unique: true, allowNull: false },
+    email: { type: DataTypes.STRING, unique: true, allowNull: false  },
     password: { type: DataTypes.STRING, allowNull: false },
-    isAdmin: { type: DataTypes.BOOLEAN, defaultValue: false },
+    isAdmin: { type: DataTypes.BOOLEAN, defaultValue: false},
 }, {
-    timestamps: true, // Alterado para true para criar created_at e updated_at
+    timestamps: false,
     tableName: 'users',
 });
 
