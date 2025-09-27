@@ -365,5 +365,156 @@ const registerAdmin = async (req, res) => {
     }
 };
 
+// userController.js - Adicione estas funções
 
-export { loginUser, registerUser, adminLogin, changeAdminCredentials, registerAdmin };
+// Get all users (apenas admin)
+const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.findAll({
+            attributes: { exclude: ['password'] }, // Exclui a senha por segurança
+            order: [['createdAt', 'DESC']]
+        });
+
+        res.json({ 
+            success: true, 
+            users 
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Erro ao buscar usuários." 
+        });
+    }
+};
+
+// Get user by ID (apenas admin)
+const getUserById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const user = await User.findByPk(id, {
+            attributes: { exclude: ['password'] } // Exclui a senha
+        });
+
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Usuário não encontrado." 
+            });
+        }
+
+        res.json({ 
+            success: true, 
+            user 
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Erro ao buscar usuário." 
+        });
+    }
+};
+
+// Delete user (apenas admin)
+const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Impede que o admin se delete
+        if (req.user.id === parseInt(id)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Você não pode excluir sua própria conta." 
+            });
+        }
+
+        const user = await User.findByPk(id);
+
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Usuário não encontrado." 
+            });
+        }
+
+        await User.destroy({ where: { id } });
+
+        res.json({ 
+            success: true, 
+            message: "Usuário excluído com sucesso!" 
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Erro ao excluir usuário." 
+        });
+    }
+};
+
+// Update user (apenas admin)
+const updateUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, email, isAdmin } = req.body;
+
+        const user = await User.findByPk(id);
+
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Usuário não encontrado." 
+            });
+        }
+
+        // Verifica se o email já existe em outro usuário
+        if (email && email !== user.email) {
+            const existingUser = await User.findOne({ where: { email } });
+            if (existingUser) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "Já existe um usuário com este email." 
+                });
+            }
+        }
+
+        // Atualiza os campos
+        if (name) user.name = name;
+        if (email) user.email = email;
+        if (isAdmin !== undefined) user.isAdmin = isAdmin;
+
+        await user.save();
+
+        // Retorna usuário sem a senha
+        const userWithoutPassword = await User.findByPk(id, {
+            attributes: { exclude: ['password'] }
+        });
+
+        res.json({ 
+            success: true, 
+            message: "Usuário atualizado com sucesso!",
+            user: userWithoutPassword
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Erro ao atualizar usuário." 
+        });
+    }
+};
+
+// Exporte as novas funções
+export { 
+    loginUser, 
+    registerUser, 
+    adminLogin, 
+    changeAdminCredentials, 
+    registerAdmin,
+    getAllUsers,
+    getUserById,
+    deleteUser,
+    updateUser
+};

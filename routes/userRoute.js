@@ -1,18 +1,33 @@
+// userRoute.js - Adicione estas rotas
 import express from 'express';
-
-import { loginUser, registerUser, adminLogin, changeAdminCredentials, registerAdmin } from '../controllers/userController.js';
+import { 
+    loginUser, 
+    registerUser, 
+    adminLogin, 
+    changeAdminCredentials, 
+    registerAdmin,
+    getAllUsers,
+    getUserById,
+    deleteUser,
+    updateUser
+} from '../controllers/userController.js';
 import adminAuth from '../middleware/adminAuth.js';
 
 const userRoute = express.Router();
 
-userRoute.post('/register', registerUser)
-userRoute.post('/login', loginUser)
+// Rotas públicas
+userRoute.post('/register', registerUser);
+userRoute.post('/login', loginUser);
 
-// ROTAS DE ADMIN
-userRoute.post('/admin',  adminLogin)
+// Rotas de administrador
+userRoute.post('/admin', adminLogin);
+userRoute.post('/register-admin', registerAdmin);
+userRoute.post('/change-credentials', adminAuth, changeAdminCredentials);
 
-// Adicione a nova rota de cadastro de administrador
-userRoute.post('/register-admin', registerAdmin)
-userRoute.post('/change-credentials', adminAuth, changeAdminCredentials)
+// NOVAS ROTAS PARA GERENCIAMENTO DE USUÁRIOS (apenas admin)
+userRoute.get('/admin/users', adminAuth, getAllUsers);
+userRoute.get('/admin/users/:id', adminAuth, getUserById);
+userRoute.put('/admin/users/:id', adminAuth, updateUser);
+userRoute.delete('/admin/users/:id', adminAuth, deleteUser);
 
 export default userRoute;
