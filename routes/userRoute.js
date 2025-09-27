@@ -9,7 +9,8 @@ import {
     getAllUsers,
     getUserById,
     deleteUser,
-    updateUser
+    updateUser,
+    updateUserPassword
 } from '../controllers/userController.js';
 import adminAuth from '../middleware/adminAuth.js';
 
