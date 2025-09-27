@@ -370,20 +370,24 @@ const registerAdmin = async (req, res) => {
 // Get all users (apenas admin)
 const getAllUsers = async (req, res) => {
     try {
+        console.log("Buscando todos os usuários...");
+        
         const users = await User.findAll({
-            attributes: { exclude: ['password'] }, // Exclui a senha por segurança
-            order: [['createdAt', 'DESC']]
+            attributes: ['id', 'name', 'email', 'isAdmin'], // Campos explícitos
+            order: [['id', 'DESC']] // Ordena por ID instead de createdAt
         });
+
+        console.log("Usuários encontrados:", users.length);
 
         res.json({ 
             success: true, 
             users 
         });
     } catch (error) {
-        console.log(error);
+        console.error("Erro ao buscar usuários:", error);
         res.status(500).json({ 
             success: false, 
-            message: "Erro ao buscar usuários." 
+            message: "Erro ao buscar usuários."
         });
     }
 };
