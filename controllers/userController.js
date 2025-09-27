@@ -510,6 +510,54 @@ const updateUser = async (req, res) => {
     }
 };
 
+// controllers/userController.js - Adicione esta função
+const updateUserPassword = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { newPassword } = req.body;
+
+        if (!newPassword) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Nova senha é obrigatória." 
+            });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "A senha precisa ter pelo menos 8 caracteres." 
+            });
+        }
+
+        const user = await User.findByPk(id);
+
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Usuário não encontrado." 
+            });
+        }
+
+        // Hash da nova senha
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        user.password = hashedPassword;
+        await user.save();
+
+        res.json({ 
+            success: true, 
+            message: "Senha atualizada com sucesso!" 
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Erro ao atualizar senha." 
+        });
+    }
+};
 // Exporte as novas funções
 export { 
     loginUser, 
@@ -520,5 +568,6 @@ export {
     getAllUsers,
     getUserById,
     deleteUser,
-    updateUser
+    updateUser,
+    updateUserPassword
 };

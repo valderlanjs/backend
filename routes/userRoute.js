@@ -29,5 +29,6 @@ userRoute.get('/admin/users', adminAuth, getAllUsers);
 userRoute.get('/admin/users/:id', adminAuth, getUserById);
 userRoute.put('/admin/users/:id', adminAuth, updateUser);
 userRoute.delete('/admin/users/:id', adminAuth, deleteUser);
+userRoute.put('/admin/users/:id/password', adminAuth, updateUserPassword);
 
 export default userRoute;
