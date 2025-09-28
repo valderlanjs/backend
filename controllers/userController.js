@@ -247,63 +247,77 @@ const registerUser = async (req, res) => {
 
 
 
+// userController.js - Versão com DEBUG COMPLETO
 const adminLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        console.log('=== TENTATIVA DE LOGIN ADMIN ===');
-        console.log('Email:', email);
+        console.log('🔐 === TENTATIVA DE LOGIN ADMIN INICIADA ===');
+        console.log('📧 Email recebido:', email);
+        console.log('🔑 Senha recebida:', password ? '***' + password.slice(-3) : 'vazia');
 
-        // Busca usuário sem filtrar por isAdmin
+        // Busca o usuário
         const user = await User.findOne({ where: { email } });
         
         if (!user) {
-            console.log('=== USUÁRIO NÃO ENCONTRADO ===');
+            console.log('❌ === USUÁRIO NÃO ENCONTRADO NO BANCO ===');
+            console.log('ℹ️ Email procurado:', email);
             return res.status(401).json({
                 success: false,
-                message: "Usuário não encontrado."
+                message: "Credenciais inválidas."
             });
         }
 
-        console.log('=== USUÁRIO ENCONTRADO ===');
-        console.log('Nome:', user.name);
-        console.log('Email:', user.email);
-        console.log('isAdmin:', user.isAdmin);
+        console.log('✅ === USUÁRIO ENCONTRADO ===');
+        console.log('👤 ID:', user.id);
+        console.log('📛 Nome:', user.name);
+        console.log('📧 Email:', user.email);
+        console.log('👑 isAdmin:', user.isAdmin);
+        console.log('🔐 Hash da senha (início):', user.password.substring(0, 20) + '...');
 
-        // Verifica senha
-        const validPassword = await bcrypt.compare(password, user.password);
-        console.log('Senha válida?', validPassword);
+        // Verifica a senha
+        console.log('🔍 === VERIFICANDO SENHA ===');
+        const isMatch = await bcrypt.compare(password, user.password);
+        console.log('✅ Senha confere?', isMatch);
 
-        if (!validPassword) {
-            console.log('=== SENHA INVÁLIDA ===');
+        if (!isMatch) {
+            console.log('❌ === SENHA INCORRETA ===');
+            console.log('💡 Senha fornecida:', password);
+            console.log('💡 Hash no banco:', user.password);
             return res.status(401).json({
                 success: false,
-                message: "Senha incorreta."
+                message: "Credenciais inválidas."
             });
         }
 
         // Verifica se é admin
+        console.log('🔍 === VERIFICANDO SE É ADMIN ===');
+        console.log('👑 isAdmin value:', user.isAdmin);
+        console.log('👑 isAdmin type:', typeof user.isAdmin);
+        
         if (user.isAdmin !== true) {
-            console.log('=== NÃO É ADMIN ===');
+            console.log('❌ === USUÁRIO NÃO É ADMINISTRADOR ===');
             return res.status(403).json({
                 success: false,
-                message: "Acesso permitido apenas para administradores."
+                message: "Acesso negado. Permissão de administrador necessária."
             });
         }
+
+        console.log('✅ === USUÁRIO É ADMINISTRADOR ===');
 
         // Gera token
         const token = jwt.sign(
             { id: user.id, isAdmin: true },
             process.env.JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: '7d' }
         );
 
-        console.log('=== LOGIN BEM-SUCEDIDO ===');
-        console.log('Token gerado para:', user.name);
+        console.log('🎉 === LOGIN BEM-SUCEDIDO ===');
+        console.log('✅ Token gerado para:', user.name);
+        console.log('✅ Email:', user.email);
 
         res.json({
             success: true,
-            message: "Login realizado com sucesso!",
             token,
             user: {
                 id: user.id,
@@ -314,7 +328,7 @@ const adminLogin = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('=== ERRO NO LOGIN ===', error);
+        console.error('💥 === ERRO NO LOGIN ===', error);
         res.status(500).json({
             success: false,
             message: "Erro interno do servidor."
