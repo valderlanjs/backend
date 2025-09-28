@@ -250,97 +250,60 @@ const registerUser = async (req, res) => {
 // userController.js - Versão com DEBUG COMPLETO
 // userController.js - FUNÇÃO adminLogin COM DEBUG COMPLETO
 const adminLogin = async (req, res) => {
-    try {
-        console.log('🔐 === INÍCIO adminLogin ===');
-        console.log('📦 Body recebido:', JSON.stringify(req.body, null, 2));
-        
-        const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-        if (!email || !password) {
-            console.log('❌ Email ou senha vazios');
-            return res.status(400).json({
-                success: false,
-                message: "Email e senha são obrigatórios."
-            });
-        }
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email e senha são obrigatórios." });
+    }
 
-        console.log('🔍 Buscando usuário no banco...');
-        const user = await User.findOne({ where: { email } });
-        
-        if (!user) {
-            console.log('❌ Usuário não encontrado no banco');
-            return res.status(401).json({
-                success: false,
-                message: "Credenciais inválidas."
-            });
-        }
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Credenciais inválidas." });
+    }
 
-        console.log('✅ Usuário encontrado:', {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            isAdmin: user.isAdmin,
-            passwordHash: user.password.substring(0, 20) + '...'
-        });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Credenciais inválidas." });
+    }
 
-        console.log('🔐 Comparando senha...');
-        console.log('Senha recebida:', password);
-        
-        const isMatch = await bcrypt.compare(password, user.password);
-        console.log('Resultado bcrypt.compare:', isMatch);
-
-        if (!isMatch) {
-            console.log('❌ Senha não confere');
-            return res.status(401).json({
-                success: false,
-                message: "Credenciais inválidas."
-            });
-        }
-
-        console.log('👑 Verificando se é admin...');
-        console.log('user.isAdmin:', user.isAdmin);
-        console.log('Tipo de user.isAdmin:', typeof user.isAdmin);
-        
-        // VERIFICAÇÃO EXTRA ROBUSTA
-        const isAdminUser = Boolean(user.isAdmin) === true;
-        console.log('É admin?', isAdminUser);
-
-        if (!isAdminUser) {
-            console.log('❌ Usuário não é administrador');
-            return res.status(403).json({
-                success: false,
-                message: "Acesso negado. Permissão de administrador necessária."
-            });
-        }
-
-        console.log('✅ Tudo validado! Gerando token...');
-        
-        const token = jwt.sign(
-            { id: user.id, isAdmin: true },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
-
-        console.log('🎉 Login bem-sucedido!');
-        
-        res.json({
-            success: true,
-            token,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                isAdmin: user.isAdmin
-            }
-        });
-
-    } catch (error) {
-        console.error('💥 ERRO em adminLogin:', error);
-        res.status(500).json({
-            success: false,
-            message: "Erro interno do servidor."
+    if (!user.isAdmin) {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Acesso negado. Permissão de administrador necessária.",
         });
     }
+
+    const token = jwt.sign(
+      { id: user.id, isAdmin: true },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      },
+    });
+  } catch (error) {
+    console.error("adminLogin error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Erro interno do servidor." });
+  }
 };
 const changeAdminCredentials = async (req, res) => {
     try {
