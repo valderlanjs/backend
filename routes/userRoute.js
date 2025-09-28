@@ -24,7 +24,7 @@ userRoute.post("/login", adminAuth, loginUser);
 userRoute.post("/admin", adminAuth, adminLogin);
 userRoute.post("/register-admin", adminAuth, registerAdmin);
 userRoute.post("/change-credentials", adminAuth, changeAdminCredentials);
-
+userRoute.post('/admin/register', adminAuth, registerUser);
 // NOVAS ROTAS PARA GERENCIAMENTO DE USUÁRIOS (apenas admin)
 userRoute.get("/admin/users", adminAuth, getAllUsers);
 userRoute.get("/admin/users/:id", adminAuth, getUserById);
