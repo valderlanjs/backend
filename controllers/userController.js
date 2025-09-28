@@ -558,6 +558,79 @@ const updateUserPassword = async (req, res) => {
         });
     }
 };
+
+
+// Função para registrar o primeiro administrador (sem autenticação)
+const registerFirstAdmin = async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+
+        // Verifica se já existe algum usuário no sistema
+        const userCount = await User.count();
+        
+        if (userCount > 0) {
+            return res.status(403).json({
+                success: false,
+                message: "Já existem usuários no sistema. Use o painel administrativo."
+            });
+        }
+
+        // Validações
+        if (!validator.isEmail(email)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Insira um email válido." 
+            });
+        }
+
+        if (password.length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: "A senha precisa ter pelo menos 8 caracteres."
+            });
+        }
+
+        const exists = await User.findOne({ where: { email } });
+        if (exists) {
+            return res.status(400).json({
+                success: false,
+                message: "Já existe um usuário com esse email."
+            });
+        }
+
+        // Hash da senha
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Cria o primeiro usuário como administrador
+        const userData = { 
+            name, 
+            email, 
+            password: hashedPassword, 
+            isAdmin: true 
+        };
+
+        const user = await User.create(userData);
+
+        res.status(201).json({
+            success: true,
+            message: "Primeiro administrador cadastrado com sucesso!",
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                isAdmin: user.isAdmin
+            }
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
+            message: "Erro ao cadastrar o primeiro administrador."
+        });
+    }
+};
 // Exporte as novas funções
 export { 
     loginUser, 
@@ -569,5 +642,7 @@ export {
     getUserById,
     deleteUser,
     updateUser,
-    updateUserPassword
+    updateUserPassword,
+    registerFirstAdmin
+    
 };
