@@ -253,56 +253,79 @@ const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log("🔐 Tentativa de login admin:", email);
+
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Email e senha são obrigatórios." });
+      return res.status(400).json({
+        success: false,
+        message: "Email e senha são obrigatórios",
+      });
     }
 
-    const user = await User.findOne({ where: { email } });
+    // Buscar usuário pelo email
+    const user = await User.findOne({ 
+      where: { email: email.toLowerCase().trim() } 
+    });
+
     if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Credenciais inválidas." });
+      console.log("❌ Usuário não encontrado:", email);
+      return res.status(401).json({
+        success: false,
+        message: "Credenciais inválidas",
+      });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Credenciais inválidas." });
-    }
-
+    // Verificar se é admin
     if (!user.isAdmin) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Acesso negado. Permissão de administrador necessária.",
-        });
+      console.log("❌ Usuário não é admin:", email);
+      return res.status(403).json({
+        success: false,
+        message: "Acesso negado. Apenas administradores podem acessar.",
+      });
     }
 
+    // Verificar senha
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      console.log("❌ Senha inválida para:", email);
+      return res.status(401).json({
+        success: false,
+        message: "Credenciais inválidas",
+      });
+    }
+
+    // Gerar token
     const token = jwt.sign(
-      { id: user.id, isAdmin: true },
+      { 
+        id: user.id, 
+        email: user.email, 
+        isAdmin: user.isAdmin 
+      },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "24h" }
     );
 
-    return res.json({
+    console.log("✅ Login admin bem-sucedido:", email);
+
+    res.status(200).json({
       success: true,
-      token,
+      message: "Login realizado com sucesso",
+      token: token,
       user: {
         id: user.id,
-        name: user.name,
         email: user.email,
-        isAdmin: user.isAdmin,
-      },
+        name: user.name,
+        isAdmin: user.isAdmin
+      }
     });
+
   } catch (error) {
-    console.error("adminLogin error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Erro interno do servidor." });
+    console.error("❌ Erro no login admin:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erro interno do servidor",
+      error: error.message
+    });
   }
 };
 const changeAdminCredentials = async (req, res) => {
