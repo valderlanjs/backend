@@ -247,13 +247,14 @@ const registerUser = async (req, res) => {
 
 
 // userController.js - Função adminLogin CORRIGIDA
+// userController.js - FUNÇÃO adminLogin CORRIGIDA
 const adminLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
 
         console.log('🔐 Tentativa de login admin:', email);
 
-        // Busca o usuário pelo email
+        // Busca o usuário APENAS pelo email (REMOVA isAdmin da query)
         const user = await User.findOne({ where: { email } });
 
         if (!user) {
@@ -266,17 +267,9 @@ const adminLogin = async (req, res) => {
 
         console.log('👤 Usuário encontrado:', user.email);
         console.log('👑 isAdmin:', user.isAdmin);
+        console.log('🔍 Verificando senha...');
 
-        // Verifica se é administrador
-        if (!user.isAdmin) {
-            console.log('❌ Usuário não é administrador');
-            return res.status(403).json({
-                success: false,
-                message: "Acesso negado. Permissão de administrador necessária."
-            });
-        }
-
-        // Verifica a senha
+        // Verifica a senha PRIMEIRO
         const isMatch = await bcrypt.compare(password, user.password);
         console.log('🔑 Senha confere?', isMatch);
 
@@ -287,14 +280,23 @@ const adminLogin = async (req, res) => {
             });
         }
 
-        // Cria o token com informação de admin
+        // Verifica se é administrador DEPOIS de verificar a senha
+        if (!user.isAdmin) {
+            console.log('❌ Usuário não é administrador');
+            return res.status(403).json({
+                success: false,
+                message: "Acesso negado. Permissão de administrador necessária."
+            });
+        }
+
+        // Cria o token
         const token = jwt.sign(
             { id: user.id, isAdmin: true },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
-        console.log('✅ Login admin bem-sucedido');
+        console.log('✅ Login admin bem-sucedido para:', user.email);
 
         res.json({
             success: true,
