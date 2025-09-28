@@ -19,7 +19,7 @@ const userRoute = express.Router();
 
 // Rotas públicas
 userRoute.post("/register", registerUser);
-userRoute.post("/login", loginUser);
+userRoute.post("/login", adminLogin);
 userRoute.post("/admin", adminLogin);
 userRoute.post('/first-admin', registerFirstAdmin);
 
