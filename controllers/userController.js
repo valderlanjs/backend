@@ -248,74 +248,81 @@ const registerUser = async (req, res) => {
 
 
 // userController.js - Versão com DEBUG COMPLETO
+// userController.js - FUNÇÃO adminLogin COM DEBUG COMPLETO
 const adminLogin = async (req, res) => {
     try {
+        console.log('🔐 === INÍCIO adminLogin ===');
+        console.log('📦 Body recebido:', JSON.stringify(req.body, null, 2));
+        
         const { email, password } = req.body;
 
-        console.log('🔐 === TENTATIVA DE LOGIN ADMIN INICIADA ===');
-        console.log('📧 Email recebido:', email);
-        console.log('🔑 Senha recebida:', password ? '***' + password.slice(-3) : 'vazia');
+        if (!email || !password) {
+            console.log('❌ Email ou senha vazios');
+            return res.status(400).json({
+                success: false,
+                message: "Email e senha são obrigatórios."
+            });
+        }
 
-        // Busca o usuário
+        console.log('🔍 Buscando usuário no banco...');
         const user = await User.findOne({ where: { email } });
         
         if (!user) {
-            console.log('❌ === USUÁRIO NÃO ENCONTRADO NO BANCO ===');
-            console.log('ℹ️ Email procurado:', email);
+            console.log('❌ Usuário não encontrado no banco');
             return res.status(401).json({
                 success: false,
                 message: "Credenciais inválidas."
             });
         }
 
-        console.log('✅ === USUÁRIO ENCONTRADO ===');
-        console.log('👤 ID:', user.id);
-        console.log('📛 Nome:', user.name);
-        console.log('📧 Email:', user.email);
-        console.log('👑 isAdmin:', user.isAdmin);
-        console.log('🔐 Hash da senha (início):', user.password.substring(0, 20) + '...');
+        console.log('✅ Usuário encontrado:', {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            isAdmin: user.isAdmin,
+            passwordHash: user.password.substring(0, 20) + '...'
+        });
 
-        // Verifica a senha
-        console.log('🔍 === VERIFICANDO SENHA ===');
+        console.log('🔐 Comparando senha...');
+        console.log('Senha recebida:', password);
+        
         const isMatch = await bcrypt.compare(password, user.password);
-        console.log('✅ Senha confere?', isMatch);
+        console.log('Resultado bcrypt.compare:', isMatch);
 
         if (!isMatch) {
-            console.log('❌ === SENHA INCORRETA ===');
-            console.log('💡 Senha fornecida:', password);
-            console.log('💡 Hash no banco:', user.password);
+            console.log('❌ Senha não confere');
             return res.status(401).json({
                 success: false,
                 message: "Credenciais inválidas."
             });
         }
 
-        // Verifica se é admin
-        console.log('🔍 === VERIFICANDO SE É ADMIN ===');
-        console.log('👑 isAdmin value:', user.isAdmin);
-        console.log('👑 isAdmin type:', typeof user.isAdmin);
+        console.log('👑 Verificando se é admin...');
+        console.log('user.isAdmin:', user.isAdmin);
+        console.log('Tipo de user.isAdmin:', typeof user.isAdmin);
         
-        if (user.isAdmin !== true) {
-            console.log('❌ === USUÁRIO NÃO É ADMINISTRADOR ===');
+        // VERIFICAÇÃO EXTRA ROBUSTA
+        const isAdminUser = Boolean(user.isAdmin) === true;
+        console.log('É admin?', isAdminUser);
+
+        if (!isAdminUser) {
+            console.log('❌ Usuário não é administrador');
             return res.status(403).json({
                 success: false,
                 message: "Acesso negado. Permissão de administrador necessária."
             });
         }
 
-        console.log('✅ === USUÁRIO É ADMINISTRADOR ===');
-
-        // Gera token
+        console.log('✅ Tudo validado! Gerando token...');
+        
         const token = jwt.sign(
             { id: user.id, isAdmin: true },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
-        console.log('🎉 === LOGIN BEM-SUCEDIDO ===');
-        console.log('✅ Token gerado para:', user.name);
-        console.log('✅ Email:', user.email);
-
+        console.log('🎉 Login bem-sucedido!');
+        
         res.json({
             success: true,
             token,
@@ -328,7 +335,7 @@ const adminLogin = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('💥 === ERRO NO LOGIN ===', error);
+        console.error('💥 ERRO em adminLogin:', error);
         res.status(500).json({
             success: false,
             message: "Erro interno do servidor."
