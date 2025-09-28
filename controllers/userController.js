@@ -246,60 +246,64 @@ const registerUser = async (req, res) => {
 };
 
 
-// userController.js - Função adminLogin CORRIGIDA
-// userController.js - FUNÇÃO adminLogin CORRIGIDA
+
 const adminLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        console.log('🔐 Tentativa de login admin:', email);
+        console.log('=== TENTATIVA DE LOGIN ADMIN ===');
+        console.log('Email:', email);
 
-        // Busca o usuário APENAS pelo email (REMOVA isAdmin da query)
+        // Busca usuário sem filtrar por isAdmin
         const user = await User.findOne({ where: { email } });
-
+        
         if (!user) {
-            console.log('❌ Usuário não encontrado');
+            console.log('=== USUÁRIO NÃO ENCONTRADO ===');
             return res.status(401).json({
                 success: false,
-                message: "Credenciais inválidas."
+                message: "Usuário não encontrado."
             });
         }
 
-        console.log('👤 Usuário encontrado:', user.email);
-        console.log('👑 isAdmin:', user.isAdmin);
-        console.log('🔍 Verificando senha...');
+        console.log('=== USUÁRIO ENCONTRADO ===');
+        console.log('Nome:', user.name);
+        console.log('Email:', user.email);
+        console.log('isAdmin:', user.isAdmin);
 
-        // Verifica a senha PRIMEIRO
-        const isMatch = await bcrypt.compare(password, user.password);
-        console.log('🔑 Senha confere?', isMatch);
+        // Verifica senha
+        const validPassword = await bcrypt.compare(password, user.password);
+        console.log('Senha válida?', validPassword);
 
-        if (!isMatch) {
+        if (!validPassword) {
+            console.log('=== SENHA INVÁLIDA ===');
             return res.status(401).json({
                 success: false,
-                message: "Credenciais inválidas."
+                message: "Senha incorreta."
             });
         }
 
-        // Verifica se é administrador DEPOIS de verificar a senha
-        if (!user.isAdmin) {
-            console.log('❌ Usuário não é administrador');
+        // Verifica se é admin
+        if (user.isAdmin !== true) {
+            console.log('=== NÃO É ADMIN ===');
             return res.status(403).json({
                 success: false,
-                message: "Acesso negado. Permissão de administrador necessária."
+                message: "Acesso permitido apenas para administradores."
             });
         }
 
-        // Cria o token
+        // Gera token
         const token = jwt.sign(
             { id: user.id, isAdmin: true },
             process.env.JWT_SECRET,
-            { expiresIn: '7d' }
+            { expiresIn: '24h' }
         );
 
-        console.log('✅ Login admin bem-sucedido para:', user.email);
+        console.log('=== LOGIN BEM-SUCEDIDO ===');
+        console.log('Token gerado para:', user.name);
 
         res.json({
             success: true,
+            message: "Login realizado com sucesso!",
             token,
             user: {
                 id: user.id,
@@ -310,14 +314,13 @@ const adminLogin = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Erro no login admin:", error);
+        console.error('=== ERRO NO LOGIN ===', error);
         res.status(500).json({
             success: false,
             message: "Erro interno do servidor."
         });
     }
 };
-
 const changeAdminCredentials = async (req, res) => {
     try {
         const { currentPassword, newPassword, newUsername } = req.body;
