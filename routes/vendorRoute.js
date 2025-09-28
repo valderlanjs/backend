@@ -5,9 +5,9 @@ import adminAuth from "../middleware/adminAuth.js";
 
 const vendorRouter = express.Router();
 
-vendorRouter.post('/add', adminAuth, upload.fields([{ name: 'image', maxCount: 1 }]), addVendor);
-vendorRouter.get('/list', adminAuth, listVendors);
-vendorRouter.post('/update', adminAuth, upload.fields([{ name: 'image', maxCount: 1 }]), updateVendor);
-vendorRouter.post('/remove', adminAuth, removeVendor);
+vendorRouter.post('/add', upload.fields([{ name: 'image', maxCount: 1 }]), addVendor);
+vendorRouter.get('/list', listVendors);
+vendorRouter.post('/update', upload.fields([{ name: 'image', maxCount: 1 }]), updateVendor);
+vendorRouter.post('/remove', removeVendor);
 
 export default vendorRouter;

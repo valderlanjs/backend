@@ -16,9 +16,9 @@ const logoRoute = express.Router();
 logoRoute.get('/active', getActiveLogo);
 
 // Rotas administrativas
-logoRoute.get('/admin/all', adminAuth, getAllLogos);
-logoRoute.post('/admin/upload', adminAuth, upload.fields([{ name: 'image', maxCount: 1 }]), uploadLogo);
-logoRoute.put('/admin/set-active/:id', adminAuth, setActiveLogo);
+logoRoute.get('/admin/all', getAllLogos);
+logoRoute.post('/admin/upload', upload.fields([{ name: 'image', maxCount: 1 }]), uploadLogo);
+logoRoute.put('/admin/set-active/:id', setActiveLogo);
 logoRoute.delete('/admin/delete/:id', adminAuth, deleteLogo);
 
 export default logoRoute;
