@@ -246,33 +246,73 @@ const registerUser = async (req, res) => {
 };
 
 
+// userController.js - Função adminLogin CORRIGIDA
 const adminLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const user = await User.findOne({ where: { email, isAdmin: true } });
+        console.log('🔐 Tentativa de login admin:', email);
+
+        // Busca o usuário pelo email
+        const user = await User.findOne({ where: { email } });
 
         if (!user) {
-            return res.status(404).json({
+            console.log('❌ Usuário não encontrado');
+            return res.status(401).json({
                 success: false,
-                message: "Administrador não encontrado!",
+                message: "Credenciais inválidas."
             });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        console.log('👤 Usuário encontrado:', user.email);
+        console.log('👑 isAdmin:', user.isAdmin);
 
-        if (isMatch) {
-            const token = jwt.sign(
-                { id: user.id, isAdmin: true },
-                process.env.JWT_SECRET
-            );
-            res.json({ success: true, token });
-        } else {
-            res.status(400).json({ success: false, message: "Credenciais inválidas" });
+        // Verifica se é administrador
+        if (!user.isAdmin) {
+            console.log('❌ Usuário não é administrador');
+            return res.status(403).json({
+                success: false,
+                message: "Acesso negado. Permissão de administrador necessária."
+            });
         }
+
+        // Verifica a senha
+        const isMatch = await bcrypt.compare(password, user.password);
+        console.log('🔑 Senha confere?', isMatch);
+
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                message: "Credenciais inválidas."
+            });
+        }
+
+        // Cria o token com informação de admin
+        const token = jwt.sign(
+            { id: user.id, isAdmin: true },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        console.log('✅ Login admin bem-sucedido');
+
+        res.json({
+            success: true,
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                isAdmin: user.isAdmin
+            }
+        });
+
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ success: false, message: "Erro no servidor." });
+        console.error("❌ Erro no login admin:", error);
+        res.status(500).json({
+            success: false,
+            message: "Erro interno do servidor."
+        });
     }
 };
 

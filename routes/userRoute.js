@@ -20,15 +20,18 @@ const userRoute = express.Router();
 // Rotas públicas
 userRoute.post("/register", registerUser);
 userRoute.post("/login", loginUser);
+userRoute.post("/admin", adminLogin);
+userRoute.post('/first-admin', registerFirstAdmin);
+
+
 
 // Rotas de administrador
-userRoute.post("/admin", adminAuth, adminLogin);
 userRoute.post("/register-admin", adminAuth, registerAdmin);
 userRoute.post("/change-credentials", adminAuth, changeAdminCredentials);
 userRoute.post('/admin/register', adminAuth, registerUser);
 
 
-// NOVAS ROTAS PARA GERENCIAMENTO DE USUÁRIOS (apenas admin)
+// GERENCIAMENTO DE USUÁRIOS (apenas admin)
 userRoute.get("/admin/users", adminAuth, getAllUsers);
 userRoute.get("/admin/users/:id", adminAuth, getUserById);
 userRoute.put("/admin/users/:id", adminAuth, updateUser);
@@ -36,6 +39,5 @@ userRoute.delete("/admin/users/:id", adminAuth, deleteUser);
 userRoute.put("/admin/users/:id/password", adminAuth, updateUserPassword);
 
 
-userRoute.post('/first-admin', registerFirstAdmin);
 
 export default userRoute;
